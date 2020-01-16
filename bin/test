@@ -1,0 +1,7 @@
+#!/bin/bash
+
+export PHIVE_VERSION=0.13.2
+
+if [[ $EUID == 0 ]]; then export SUDO=""; else export SUDO="sudo"; fi
+
+$SUDO wget https://github.com/phar-io/phive/releases/download/PHIVE_VERSION/phive-$PHIVE_VERSION.phar -o /usr/bin/phive.phar

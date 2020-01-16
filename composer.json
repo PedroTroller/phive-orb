@@ -1,0 +1,24 @@
+{
+    "name": "pedrotroller/phive-orb",
+    "type": "project",
+    "description": "CircleCI Orb to install and execute Phive",
+    "authors": [
+        {
+            "name": "Pierre PLAZANET",
+            "email": "plazanet.pierre@gmail.com"
+        }
+    ],
+    "require": {
+        "phar-io/phive": "0.13.1"
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/phar-io/phive.git"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require-dev": {
+        "symfony/yaml": "^5.1@dev"
+    }
+}

@@ -1,0 +1,29 @@
+#!/usr/bin/env php
+<?php
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+$circleCiConfigFile = dirname(__DIR__) . '/.circleci/config.yml';
+$circleCiOrbFile    = dirname(__DIR__) . '/.circleci/orb.yml';
+$composerLockFile   = dirname(__DIR__) . '/composer.lock';
+
+$circleCiConfigData = Symfony\Component\Yaml\Yaml::parseFile($circleCiConfigFile);
+
+// Extract data from .circleci/config.yaml
+$circleCiOrbData = array_merge(
+    [
+        'version' => $circleCiConfigData['version'],
+    ],
+    $circleCiConfigData['orbs']['phive'],
+);
+
+$composerLockData = json_decode((string) file_get_contents($composerLockFile), true);
+
+// Update PHIVE version with the actual one
+foreach ($composerLockData['packages'] as $package) {
+    if ('phar-io/phive' === $package['name']) {
+        $circleCiOrbData['commands']['install']['parameters']['version']['default'] = $package['version'];
+    }
+}
+
+file_put_contents($circleCiOrbFile, Symfony\Component\Yaml\Yaml::dump($circleCiOrbData, 6));

@@ -1,0 +1,124 @@
+---
+version: 2.1
+
+executorType: machine
+
+references:
+  defaults: &defaults
+    docker:
+      - image: circleci/php:7.3
+
+orbs:
+  php: circleci/php@0.1.2
+  node: circleci/node@1.1.6
+  cli: circleci/circleci-cli@0.1.6
+  phive:
+    commands:
+      install:
+        description: "Install PHIVE"
+        parameters:
+          version:
+            description: "The PHIVE version."
+            type: string
+            default: ""
+        steps:
+          - run:
+              name: "Check if PHP is installed"
+              command: |
+                if command -v php ; then
+                    echo "PHP is installed."
+
+                    exit 0
+                else
+                    echo "PHP is not installed."
+                    echo "PHIVE needs PHP to run."
+                    echo "Please install PHP or use a PHP Docker image."
+
+                    exit 1
+                fi
+          - run:
+              name: "Install PHIVE"
+              command: |
+                export PHIVE_VERSION=<< parameters.version >>
+
+                if [ "$PHIVE_VERSION" = "" ]; then
+                    export PHIVE_VERSION=$(jq '.packages[]|select(.name=="phar-io/phive").version' composer.lock -r);
+                fi
+
+                if [[ $EUID == 0 ]]; then
+                  export SUDO="";
+                else
+                  export SUDO="sudo";
+                fi
+
+                $SUDO curl https://github.com/phar-io/phive/releases/download/$PHIVE_VERSION/phive-$PHIVE_VERSION.phar     -L --output /usr/bin/phive
+                $SUDO curl https://github.com/phar-io/phive/releases/download/$PHIVE_VERSION/phive-$PHIVE_VERSION.phar.asc -L --output /usr/bin/phive.asc
+
+                $SUDO chmod +x /usr/bin/phive
+
+jobs:
+  phive-version:
+    <<: *defaults
+    steps:
+      - checkout
+      - phive/install
+      - run: phive --version
+  phive-install-phpstan:
+    <<: *defaults
+    steps:
+      - checkout
+      - phive/install
+      - run:
+          name: Install PHPSTAN
+          command: yes | phive --home .. install phpstan --copy --trust-gpg-keys CF1A108D0E7AE720 || if [[ $? -eq 141 ]]; then true; else exit $?; fi
+      - run:
+          name: Check PHPSTAN
+          command: tools/phpstan --version
+  validate:
+    <<: *defaults
+    steps:
+      - checkout
+      - php/install-composer
+      - run:
+          name: Install PHP dependencies
+          command: composer install
+      - run:
+          name: Dump ORB file
+          command: bin/dump-orb
+      - cli/install
+      - run:
+          name: Validate ORB file
+          command: /usr/local/bin/circleci orb validate .circleci/orb.yml
+  publish:
+    <<: *defaults
+    steps:
+      - checkout
+      - php/install-composer
+      - run:
+          name: Install PHP dependencies
+          command: composer install
+      - run:
+          name: Dump ORB file
+          command: bin/dump-orb
+      - node/install
+      - run:
+          name: Install Node.js dependencies
+          command: npm install
+      - run:
+          name: Publish
+          command: node_modules/.bin/semantic-release
+
+workflows:
+  main:
+    jobs:
+      - phive-version
+      - phive-install-phpstan
+      - validate:
+          requires:
+            - phive-version
+            - phive-install-phpstan
+      - publish:
+          requires:
+            - phive-version
+            - phive-install-phpstan
+            - validate

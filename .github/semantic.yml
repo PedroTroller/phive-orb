@@ -1,0 +1,10 @@
+---
+commitsOnly: true
+
+types:
+  - release
+  - feat
+  - fix
+  - chore
+
+scopes: []
