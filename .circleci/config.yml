@@ -100,6 +100,7 @@ jobs:
       - run:
           name: Dump ORB file
           command: bin/dump-orb
+      - cli/install
       - node/install
       - run:
           name: Install Node.js dependencies
