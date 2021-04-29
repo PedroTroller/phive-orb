@@ -1,0 +1,29 @@
+version: 2
+updates:
+- package-ecosystem: composer
+  directory: "/."
+  schedule:
+    interval: daily
+    time: "04:00"
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+  commit-message:
+    prefix: feat
+    prefix-development: chore
+- package-ecosystem: npm
+  directory: "/."
+  schedule:
+    interval: daily
+    time: "04:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: semantic-release
+    versions:
+    - 17.3.7
+    - 17.3.8
+    - 17.3.9
+    - 17.4.0
+    - 17.4.1
+  commit-message:
+    prefix: chore
+    prefix-development: chore
